@@ -29,7 +29,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         activity_login_txt_go_register.setOnClickListener {
-            showRegisterActivity()
+            showActivity(RegisterActivity::class.java)
         }
     }
 
@@ -47,6 +47,7 @@ class LoginActivity : AppCompatActivity() {
         FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
             .addOnSuccessListener {
                 Log.i(TAG, "Successfully logged in as user: ${it.user.uid}")
+                showActivity(BotListActivity::class.java)
             }
             .addOnFailureListener {
                 Log.w(TAG, "Failed to log in as user: ${it.message}")
@@ -56,8 +57,8 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
-    private fun showRegisterActivity() {
-        val intent = Intent(this, RegisterActivity::class.java)
+    private fun <T: Any> showActivity(activity: Class<T>) {
+        val intent = Intent(this, activity)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
 
