@@ -20,7 +20,6 @@
                 android:inputType="textEmailAddress"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:text="example@email.com"
                 tools:ignore="Autofill, HardcodedText"/>
 
         <EditText
@@ -29,7 +28,6 @@
                 android:inputType="textPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:text="password"
                 tools:ignore="Autofill, HardcodedText"/>
 
         <Button
