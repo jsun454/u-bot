@@ -11,11 +11,22 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme"
             tools:ignore="AllowBackup, GoogleAppIndexingWarning">
+        <activity
+                android:name=".ChatRoomActivity"
+                android:windowSoftInputMode="adjustResize|stateHidden">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".BotListActivity"/>
+        </activity>
         <activity android:name=".BotListActivity">
         </activity>
-        <activity android:name=".LoginActivity">
+        <activity
+                android:name=".LoginActivity"
+                android:windowSoftInputMode="adjustResize|stateHidden">
         </activity>
-        <activity android:name=".RegisterActivity">
+        <activity
+                android:name=".RegisterActivity"
+                android:windowSoftInputMode="adjustResize|stateHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
