@@ -12,6 +12,7 @@ import com.google.firebase.database.*
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.activity_chat_room.*
+import kotlin.random.Random
 
 class ChatRoomActivity : AppCompatActivity() {
 
@@ -55,11 +56,10 @@ class ChatRoomActivity : AppCompatActivity() {
         ref.addChildEventListener(object: ChildEventListener {
             override fun onChildAdded(p0: DataSnapshot, p1: String?) {
                 val message = p0.getValue(Message::class.java) ?: return
-
                 if(message.senderId == user) {
                     adapter.add(UserMessageItem(message.message))
+                    // TODO: only call if it is really a new message
                     extractMarkovData(message)
-                    getBotResponse()
                 } else {
                     adapter.add(BotMessageItem(message.message))
                 }
@@ -77,17 +77,20 @@ class ChatRoomActivity : AppCompatActivity() {
     private fun setMarkovListeners() {
         val user = FirebaseAuth.getInstance().uid ?: return
         val personalRef = FirebaseDatabase.getInstance().getReference("/markov-data/personal/$user")
-        val sharedRef = FirebaseDatabase.getInstance().getReference("/markov-data/shared/")
+        val sharedRef = FirebaseDatabase.getInstance().getReference("/markov-data/shared")
 
         personalRef.addChildEventListener(object: ChildEventListener {
+
             override fun onChildChanged(p0: DataSnapshot, p1: String?) {
                 val valueList = p0.getValue(object: GenericTypeIndicator<ArrayList<String>>() {}) ?: return
                 personalMarkovData[p0.ref.key!!] = valueList
+                getBotResponse()
             }
 
             override fun onChildAdded(p0: DataSnapshot, p1: String?) {
                 val valueList = p0.getValue(object: GenericTypeIndicator<ArrayList<String>>() {}) ?: return
                 personalMarkovData[p0.ref.key!!] = valueList
+                getBotResponse()
             }
 
             override fun onCancelled(p0: DatabaseError) {}
@@ -130,7 +133,7 @@ class ChatRoomActivity : AppCompatActivity() {
 
         val ref = FirebaseDatabase.getInstance().getReference("/message-data/$user/$botFile").push()
 
-        val message = Message(ref.key!!, user, text, System.currentTimeMillis())
+        val message = Message(user, text, System.currentTimeMillis())
 
         ref.setValue(message)
             .addOnSuccessListener {
@@ -169,7 +172,6 @@ class ChatRoomActivity : AppCompatActivity() {
 
             personalRef.addListenerForSingleValueEvent(object: ValueEventListener {
                 override fun onDataChange(p0: DataSnapshot) {
-                    Log.d("JEFFREY", "I AM RUNNING")
                     val personalValueList = ArrayList<String>()
                     personalValueList.addAll(p0.getValue(object: GenericTypeIndicator<ArrayList<String>>() {})
                         ?: arrayListOf())
@@ -195,6 +197,47 @@ class ChatRoomActivity : AppCompatActivity() {
     }
 
     private fun getBotResponse() {
-        // TODO: fetch response from bot
+        var wordA = MARKOV_START_KEY_A
+        var wordB = MARKOV_START_KEY_B
+
+        val markovChain = ArrayList<String>()
+
+        while(true) {
+            val valueList = if(bot.isPersonal) {
+                personalMarkovData["$wordA-pair-$wordB"]
+            } else {
+                sharedMarkovData["$wordA-pair-$wordB"]
+            } ?: return
+
+            val nextWordIndex = Random.nextInt(valueList.size)
+            val nextWord = valueList[nextWordIndex]
+
+            val temp = wordB
+            wordB = nextWord
+            wordA = temp
+
+            if(nextWord == MARKOV_END_KEY) {
+                break
+            }
+
+            markovChain.add(wordB)
+        }
+
+        val sentence = markovChain.joinToString(" ")
+
+        val user = FirebaseAuth.getInstance().uid ?: return
+        val botFile = bot.fileName
+
+        val ref = FirebaseDatabase.getInstance().getReference("/message-data/$user/$botFile").push()
+
+        val botMessage = Message("", sentence, System.currentTimeMillis())
+
+        ref.setValue(botMessage)
+            .addOnSuccessListener {
+                Log.i(TAG, "Successfully saved bot's response message")
+            }
+            .addOnFailureListener {
+                Log.e(TAG, "Failed to save bot's response message: ${it.message}")
+            }
     }
 }
