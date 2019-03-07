@@ -35,7 +35,7 @@ class ChatRoomActivity : AppCompatActivity() {
     private lateinit var sharedMarkovListener: ChildEventListener
 
     private lateinit var bot: Bot
-    
+
     private var botActive: Boolean = false
     private var lastBotResponse: Long = 0
 
@@ -249,7 +249,12 @@ class ChatRoomActivity : AppCompatActivity() {
                 personalMarkovData["$wordA-pair-$wordB"]
             } else {
                 sharedMarkovData["$wordA-pair-$wordB"]
-            } ?: return
+            }
+
+            if(valueList == null) {
+                lastBotResponse -= 100
+                return
+            }
 
             val nextWordIndex = Random.nextInt(valueList.size)
             val nextWord = valueList[nextWordIndex]
