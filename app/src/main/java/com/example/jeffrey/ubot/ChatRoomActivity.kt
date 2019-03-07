@@ -26,7 +26,13 @@ class ChatRoomActivity : AppCompatActivity() {
     private val adapter = GroupAdapter<ViewHolder>()
     private val personalMarkovData = HashMap<String, ArrayList<String>>()
     private val sharedMarkovData = HashMap<String, ArrayList<String>>()
+
+    private lateinit var messageListener: ChildEventListener
+    private lateinit var personalMarkovListener: ChildEventListener
+    private lateinit var sharedMarkovListener: ChildEventListener
+
     private lateinit var bot: Bot
+    private var botActive: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +46,12 @@ class ChatRoomActivity : AppCompatActivity() {
         setOnClickListener()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+        removeListeners()
+    }
+
     private fun setRoomName() {
         bot = intent.getParcelableExtra(BotListActivity.ROOM_KEY) ?: return
         supportActionBar?.title = bot.name
@@ -51,15 +63,20 @@ class ChatRoomActivity : AppCompatActivity() {
         val user = FirebaseAuth.getInstance().uid ?: return
         val botFile = bot.fileName
 
+        val now = System.currentTimeMillis()
         val ref = FirebaseDatabase.getInstance().getReference("/message-data/$user/$botFile")
 
-        ref.addChildEventListener(object: ChildEventListener {
+        messageListener = object : ChildEventListener {
             override fun onChildAdded(p0: DataSnapshot, p1: String?) {
                 val message = p0.getValue(Message::class.java) ?: return
+
                 if(message.senderId == user) {
                     adapter.add(UserMessageItem(message.message))
-                    // TODO: only call if it is really a new message
-                    extractMarkovData(message)
+
+                    if(message.timeStamp > now) {
+                        botActive = true
+                        extractMarkovData(message)
+                    }
                 } else {
                     adapter.add(BotMessageItem(message.message))
                 }
@@ -71,7 +88,9 @@ class ChatRoomActivity : AppCompatActivity() {
             override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
             override fun onChildChanged(p0: DataSnapshot, p1: String?) {}
             override fun onChildRemoved(p0: DataSnapshot) {}
-        })
+        }
+
+        ref.addChildEventListener(messageListener)
     }
 
     private fun setMarkovListeners() {
@@ -79,26 +98,34 @@ class ChatRoomActivity : AppCompatActivity() {
         val personalRef = FirebaseDatabase.getInstance().getReference("/markov-data/personal/$user")
         val sharedRef = FirebaseDatabase.getInstance().getReference("/markov-data/shared")
 
-        personalRef.addChildEventListener(object: ChildEventListener {
-
+        personalMarkovListener = object: ChildEventListener {
             override fun onChildChanged(p0: DataSnapshot, p1: String?) {
                 val valueList = p0.getValue(object: GenericTypeIndicator<ArrayList<String>>() {}) ?: return
                 personalMarkovData[p0.ref.key!!] = valueList
-                getBotResponse()
+
+                if(botActive) {
+                    getBotResponse()
+                }
             }
 
             override fun onChildAdded(p0: DataSnapshot, p1: String?) {
+
                 val valueList = p0.getValue(object: GenericTypeIndicator<ArrayList<String>>() {}) ?: return
                 personalMarkovData[p0.ref.key!!] = valueList
-                getBotResponse()
+
+                if(botActive) {
+                    getBotResponse()
+                }
             }
 
             override fun onCancelled(p0: DatabaseError) {}
             override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
             override fun onChildRemoved(p0: DataSnapshot) {}
-        })
+        }
 
-        sharedRef.addChildEventListener(object: ChildEventListener {
+        personalRef.addChildEventListener(personalMarkovListener)
+
+        sharedMarkovListener = object: ChildEventListener {
             override fun onChildChanged(p0: DataSnapshot, p1: String?) {
                 val valueList = p0.getValue(object: GenericTypeIndicator<ArrayList<String>>() {}) ?: return
                 sharedMarkovData[p0.ref.key!!] = valueList
@@ -112,7 +139,9 @@ class ChatRoomActivity : AppCompatActivity() {
             override fun onCancelled(p0: DatabaseError) {}
             override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
             override fun onChildRemoved(p0: DataSnapshot) {}
-        })
+        }
+
+        sharedRef.addChildEventListener(sharedMarkovListener)
     }
 
     private fun setOnClickListener() {
@@ -143,18 +172,20 @@ class ChatRoomActivity : AppCompatActivity() {
             .addOnFailureListener {
                 Log.e(TAG, "Failed to save message: ${it.message}")
             }
-
     }
 
     private fun extractMarkovData(message: Message) {
         val wordList = ArrayList<String>()
+
         wordList.add(MARKOV_START_KEY_A)
         wordList.add(MARKOV_START_KEY_B)
+
         wordList.addAll(message.message.trim().splitToSequence(' ')
             .filter {
                 it.isNotEmpty()
             }
             .toList())
+
         wordList.add(MARKOV_END_KEY)
 
         if(wordList.count() == 3) {
@@ -239,5 +270,28 @@ class ChatRoomActivity : AppCompatActivity() {
             .addOnFailureListener {
                 Log.e(TAG, "Failed to save bot's response message: ${it.message}")
             }
+    }
+
+    private fun removeListeners() {
+        if(::messageListener.isInitialized) {
+            val user = FirebaseAuth.getInstance().uid ?: return
+            val botFile = bot.fileName
+            val ref = FirebaseDatabase.getInstance().getReference("/message-data/$user/$botFile")
+
+            ref.removeEventListener(messageListener)
+        }
+
+        if(::personalMarkovListener.isInitialized) {
+            val user = FirebaseAuth.getInstance().uid ?: return
+            val ref = FirebaseDatabase.getInstance().getReference("/markov-data/personal/$user")
+
+            ref.removeEventListener(personalMarkovListener)
+        }
+
+        if(::sharedMarkovListener.isInitialized) {
+            val ref = FirebaseDatabase.getInstance().getReference("/markov-data/shared")
+
+            ref.removeEventListener(sharedMarkovListener)
+        }
     }
 }
