@@ -18,9 +18,12 @@ class ChatRoomActivity : AppCompatActivity() {
 
     companion object {
         private val TAG = ChatRoomActivity::class.java.simpleName
+
         private const val MARKOV_START_KEY_A = "MARKOV_START_KEY_A"
         private const val MARKOV_START_KEY_B = "MARKOV_START_KEY_B"
         private const val MARKOV_END_KEY = "MARKOV_END_KEY"
+
+        private const val BOT_DELAY: Long = 100
     }
 
     private val adapter = GroupAdapter<ViewHolder>()
@@ -32,7 +35,9 @@ class ChatRoomActivity : AppCompatActivity() {
     private lateinit var sharedMarkovListener: ChildEventListener
 
     private lateinit var bot: Bot
+    
     private var botActive: Boolean = false
+    private var lastBotResponse: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -228,6 +233,12 @@ class ChatRoomActivity : AppCompatActivity() {
     }
 
     private fun getBotResponse() {
+        if(System.currentTimeMillis() < lastBotResponse + BOT_DELAY) {
+            return
+        }
+
+        lastBotResponse = System.currentTimeMillis()
+
         var wordA = MARKOV_START_KEY_A
         var wordB = MARKOV_START_KEY_B
 
