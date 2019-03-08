@@ -100,6 +100,7 @@ class ChatRoomActivity : AppCompatActivity() {
 
     private fun setMarkovListeners() {
         val user = FirebaseAuth.getInstance().uid ?: return
+
         val personalRef = FirebaseDatabase.getInstance().getReference("/markov-data/personal/$user")
         val sharedRef = FirebaseDatabase.getInstance().getReference("/markov-data/shared")
 
@@ -163,6 +164,7 @@ class ChatRoomActivity : AppCompatActivity() {
         }
 
         val user = FirebaseAuth.getInstance().uid ?: return
+
         val botFile = bot.fileName
 
         val ref = FirebaseDatabase.getInstance().getReference("/message-data/$user/$botFile").push()
@@ -252,7 +254,7 @@ class ChatRoomActivity : AppCompatActivity() {
             }
 
             if(valueList == null) {
-                lastBotResponse -= 100
+                lastBotResponse -= BOT_DELAY
                 return
             }
 
@@ -273,6 +275,7 @@ class ChatRoomActivity : AppCompatActivity() {
         val sentence = markovChain.joinToString(" ")
 
         val user = FirebaseAuth.getInstance().uid ?: return
+
         val botFile = bot.fileName
 
         val ref = FirebaseDatabase.getInstance().getReference("/message-data/$user/$botFile").push()
@@ -291,7 +294,9 @@ class ChatRoomActivity : AppCompatActivity() {
     private fun removeListeners() {
         if(::messageListener.isInitialized) {
             val user = FirebaseAuth.getInstance().uid ?: return
+
             val botFile = bot.fileName
+
             val ref = FirebaseDatabase.getInstance().getReference("/message-data/$user/$botFile")
 
             ref.removeEventListener(messageListener)
@@ -299,6 +304,7 @@ class ChatRoomActivity : AppCompatActivity() {
 
         if(::personalMarkovListener.isInitialized) {
             val user = FirebaseAuth.getInstance().uid ?: return
+
             val ref = FirebaseDatabase.getInstance().getReference("/markov-data/personal/$user")
 
             ref.removeEventListener(personalMarkovListener)
