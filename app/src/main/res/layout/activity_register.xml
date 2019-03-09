@@ -18,6 +18,15 @@
                 android:id="@+id/activity_register_et_email"
                 android:hint="Email"
                 android:inputType="textEmailAddress"
+                android:background="@drawable/et_rounded"
+                android:paddingTop="12dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="12dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginBottom="16dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 tools:ignore="Autofill, HardcodedText"/>
@@ -26,6 +35,15 @@
                 android:id="@+id/activity_register_et_password"
                 android:hint="Password"
                 android:inputType="textPassword"
+                android:background="@drawable/et_rounded"
+                android:paddingTop="12dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="12dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginBottom="16dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 tools:ignore="Autofill, HardcodedText"/>
@@ -33,6 +51,13 @@
         <Button
                 android:id="@+id/activity_register_btn_register"
                 android:text="Register"
+                android:textAllCaps="false"
+                android:background="@drawable/btn_rounded"
+                android:padding="8dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:layout_marginBottom="16dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 tools:ignore="HardcodedText"/>
@@ -40,6 +65,7 @@
         <TextView
                 android:id="@+id/activity_register_txt_go_login"
                 android:text="Already have an account?"
+                android:textColor="@color/colorAccent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 tools:ignore="HardcodedText"/>
