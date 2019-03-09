@@ -187,7 +187,10 @@ class ChatRoomActivity : AppCompatActivity() {
         wordList.add(MARKOV_START_KEY_A)
         wordList.add(MARKOV_START_KEY_B)
 
-        wordList.addAll(message.message.trim().splitToSequence(' ')
+        wordList.addAll(message.message
+            .replace("[.#$]|[\\[\\]]".toRegex(), "")
+            .trim()
+            .splitToSequence(' ')
             .filter {
                 it.isNotEmpty()
             }
